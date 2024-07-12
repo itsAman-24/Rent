@@ -1,0 +1,57 @@
+# Load necessary libraries
+library(dplyr)   # for data manipulation
+library(ggplot2) # for data visualization
+library(caret)   # for machine learning workflows
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Generate synthetic data
+n <- 1000  # Number of observations
+size <- rnorm(n, mean = 1500, sd = 300)  # House size in square feet
+location <- sample(c("City A", "City B", "City C"), size = n, replace = TRUE)  # Location
+rooms <- sample(2:5, size = n, replace = TRUE)  # Number of rooms
+amenities <- sample(0:1, size = n, replace = TRUE)  # Presence of amenities (0 = no, 1 = yes)
+price <- 50000 + 300 * size + 10000 * (location == "City B") + 20000 * (location == "City C") + 20000 * rooms + 15000 * amenities + rnorm(n, mean = 0, sd = 50000)  # House price (target variable)
+
+# Create data frame
+house_data <- data.frame(size, location, rooms, amenities, price)
+
+# Display first few rows of the dataset
+head(house_data)
+
+# Summary statistics
+summary(house_data)
+
+# Data cleaning and preprocessing (if necessary)
+# Example: Remove outliers based on price
+# house_data <- house_data[house_data$price <= quantile(house_data$price, 0.95), ]
+
+# Split data into training and testing sets
+train_index <- createDataPartition(house_data$price, p = 0.8, list = FALSE)
+train_data <- house_data[train_index, ]
+test_data <- house_data[-train_index, ]
+
+# Model building - Linear Regression
+lm_model <- lm(price ~ size + location + rooms + amenities, data = train_data)
+
+# Model summary
+summary(lm_model)
+
+# Predictions on test set
+predictions <- predict(lm_model, newdata = test_data)
+
+# Evaluation metrics
+rmse <- sqrt(mean((predictions - test_data$price)^2))
+r_squared <- cor(predictions, test_data$price)^2
+
+cat("RMSE:", rmse, "\n")
+cat("R-squared:", r_squared, "\n")
+
+# Plotting actual vs. predicted prices
+ggplot() +
+  geom_point(data = test_data, aes(x = price, y = predictions), color = "blue") +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  labs(x = "Actual Price", y = "Predicted Price", title = "Actual vs. Predicted House Prices")
+
+# Further analysis: Feature importance, cross-validation, etc.
